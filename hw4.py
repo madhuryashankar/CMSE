@@ -5,7 +5,7 @@ import seaborn as sns
 # Load the dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv('https://github.com/madhuryashankar/CMSE/blob/main/data.csv')  # Adjust the file name if needed
+    df = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/healthcare-dataset-stroke-data.csv')  # Adjust the file name if needed
     return df
 
 df = load_data()
