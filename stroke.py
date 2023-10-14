@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import altair as alt
 
 # Keep this to avoid unwanted warning on the wen app
 st.set_option('deprecation.showPyplotGlobalUse', False)
