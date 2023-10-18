@@ -173,7 +173,7 @@ with tab2 :
 
     if st.checkbox('Histogram'):
         st.header('Histogram')
-        st.write(" Imagine the bars as groups, each with a different color. These bars show how often something happened, like a crisis, and how it's related to something else, like a financial factor. The taller the bars, the more it happened, and you can point your mouse at them to see the exact numbers. When the bars overlap, like they're close together, it means these things are connected. If one group's bars are mostly on one side and another group's bars are on the other side, it means they're different in some way. It's like they're sharing a secret!")
+        st.write(" Imagine the bars as groups, each with a different color. These bars show how often something happened, like a stroke, and how it's related to something else, like a age. The taller the bars, the more it happened, and you can point your mouse at them to see the exact numbers. When the bars overlap, like they're close together, it means these things are connected. If one group's bars are mostly on one side and another group's bars are on the other side, it means they're different in some way. It's like they're sharing a secret!")
         col1,col2=st.columns(2,gap='small')
         st.subheader('Select a feature for the histogram:')
         selected_feature = st.selectbox('Select a feature', df.select_dtypes(include=['float64']).columns)
