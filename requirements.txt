@@ -6,3 +6,4 @@ streamlit
 altair
 plotly
 hiplot
+statsmodels
