@@ -10,7 +10,7 @@ import hiplot as hip
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Loading dataset
-data = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/healthcare-dataset-stroke-data.csv')
+df = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/healthcare-dataset-stroke-data.csv')
 
 # Function to replace missing values with median
 def replace_missing_with_median(df):
