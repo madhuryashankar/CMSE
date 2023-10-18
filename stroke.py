@@ -145,7 +145,6 @@ with tab2 :
 
         st.markdown("Observations:")
         st.markdown("1. When we look at features like gender and residence type, they don't seem to make a big difference in predicting whether a person will have a stroke or not. The chances of having a stroke for different groups within these features are quite similar to the overall dataset.")
-        st.markdown("2. However, for features like hypertension and heart disease, the probabilities of having a stroke are significantly higher for people with these health issues compared to the overall dataset. This tells us that these two features are crucial for predicting whether someone might have a stroke.")
         st.markdown("3. As for features like marriage status, work type, and smoking habits, the chances of having a stroke for specific groups are noticeably different from the overall dataset. This indicates that these features are also important in determining whether a person is at risk of having a stroke.")
     
     if st.checkbox('Examining stroke trends with human charcateristics'): 
