@@ -15,8 +15,15 @@ df = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/he
 # Function to replace missing values with median
 def replace_missing_with_median(df):
     df['bmi'] = df['bmi'].fillna(df['bmi'].median())
-    # Add more columns as needed
 
+df = df.drop('id',axis=1)
+
+# Check for duplicate rows
+duplicate_rows = df.duplicated()    
+
+# Count the number of duplicate rows
+duplicate_rows.sum()
+    
 # Function to filter data based on user selections
 def filter_data(df, selected_work_type, selected_smoking_status, selected_age_range, selected_gender):
     filtered_data = df[(df['work_type'] == selected_work_type) &
@@ -58,7 +65,7 @@ st.set_page_config(
 st.write('<h2 style="text-align:center; vertical-align:middle; line-height:2; color:#046366;">Predicting Strokes: Insights from the Data</h2>', unsafe_allow_html=True)
 
 # Create tabs
-tab1, tab2, tab3 = st.tabs(["About the Data", "Visualizations", "Playground"])
+tab1, tab2, tab3, tab4 = st.tabs(["About the Data", "Visualizations", "Playground", "Conclusion"])
 
 with tab1 :
     image_path = "bg.png"  # Replace with the actual file path
@@ -124,10 +131,11 @@ with tab2 :
         # Partition and description for bar graph
         st.markdown("---")
         st.subheader('Examining stroke trends by lifestyle category.')
-        st.markdown("You can pick different categories like gender, marital status, type of work, where you live, and smoking habits. It's a bit like a colorful bar chart you might see in a magazine. This chart helps you see how many people in each category had a stroke. By looking at this chart, you can figure out if these things, like being married or where you live, can make a stroke more likely to happen. It's like a detective tool to study strokes and learn what might cause them.")
+        st.markdown("You can pick different categories like gender, marital status, type of work, where you live, hypertension, heart disease and smoking habits. It's a bit like a colorful bar chart you might see in a magazine. This chart helps you see how many people in each category had a stroke. By looking at this chart, you can figure out if these things, like being married or where you live, can make a stroke more likely to happen. It's like a detective tool to study strokes and learn what might cause them.")
 
         # Create bar plot
-        bar_x = st.selectbox('Select a category', df.select_dtypes(include=['object']).columns)
+        categorical_variables = ['gender', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'smoking_status']
+        bar_x = st.selectbox('Select a category', categorical_variables)
         bar_plot = create_bar_plot(df, bar_x)
         st.plotly_chart(bar_plot)
 
@@ -142,11 +150,16 @@ with tab2 :
             st.markdown("**Residence Type:**  From the bar graph of the 'Residence Type' category, you can see two colorful bars representing two different types of residence: 'Urban' and 'Rural.' Each bar shows the number of people who had a stroke in these two types of areas. This helps us understand whether living in an urban or rural place might be connected to having a stroke. It's like looking at the numbers to see if the place where someone lives is related to their risk of having a stroke. This information can be valuable for understanding and preventing strokes.")
         elif bar_x == 'ever_married':
             st.markdown("**Ever Married:**   The graph will show two bars, one for people who have been married and another for those who haven't. You'll see how many people in each group had a stroke. This helps us understand if being married or not being married might affect the chances of having a stroke. It's like looking at data to find clues about how different life experiences might impact our health.")
+        elif bar_x == 'hypertension':
+            st.markdown("**Hypertension:** In this bar graph, we analyze the relationship between hypertension and strokes. The bars represent different groups, such as individuals with and without hypertension. The height of each bar indicates the number of people in each group who had a stroke. If you observe a tall bar for the 'hypertension' group, it means a significant number of people with hypertension had strokes. Conversely, if the 'no hypertension' bar is shorter, it suggests that fewer individuals without hypertension had strokes. This information can help us understand the impact of hypertension on stroke risk.")
+        elif bar_x == 'heart_disease':
+            st.markdown("**Heart Disease:** This bar graph illustrates the connection between heart disease and strokes. The bars represent different categories, including individuals with and without heart disease. The height of each bar represents the number of people in each category who had a stroke. If you see a tall bar for the 'heart disease' group, it indicates that a significant number of individuals with heart disease had strokes. Conversely, a shorter bar for the 'no heart disease' category suggests that fewer individuals without heart disease had strokes. This analysis allows us to explore the relationship between heart disease and the risk of strokes.")
 
         st.markdown("Observations:")
         st.markdown("1. When we look at features like gender and residence type, they don't seem to make a big difference in predicting whether a person will have a stroke or not. The chances of having a stroke for different groups within these features are quite similar to the overall dataset.")
-        st.markdown("3. As for features like marriage status, work type, and smoking habits, the chances of having a stroke for specific groups are noticeably different from the overall dataset. This indicates that these features are also important in determining whether a person is at risk of having a stroke.")
-    
+        st.markdown("2. As for features like marriage status, work type, and smoking habits, the chances of having a stroke for specific groups are noticeably different from the overall dataset. This indicates that these features are also important in determining whether a person is at risk of having a stroke.")
+        st.markdown("3. Regarding hypertension and heart disease, The majority of patients do not have hypertension or heart disease.")
+
     if st.checkbox('Examining stroke trends with human charcateristics'): 
         # Partition and description for violin graph
         st.markdown("---")
@@ -266,6 +279,23 @@ with tab2 :
             st.markdown("Observations:")
             st.markdown("The colorful heatmap reveals that there are only faint links between average glucose levels and age, as well as average glucose levels and BMI (Body Mass Index). However, there's a somewhat stronger connection between BMI and age.")    
 
+    if st.checkbox('3D Scatter Plot'):
+        st.header('3D Scatter Plot')
+        st.write(" The 3D scatter plot provides a three-dimensional view of how age, avg_glucose_level, and bmi interact with each other with respect to the stroke status. The points are colored based on whether a patient had a stroke (red) or not (blue).")
+       
+        # Create a color map for the 'stroke' variable
+        colors = df['stroke'].map({0: 'blue', 1: 'red'})
+
+        fig = px.scatter_3d(df, x='age', y='avg_glucose_level', z='bmi', color='stroke',color_continuous_scale=["blue", "red"],labels={'age': 'Age', 'avg_glucose_level': 'Average Glucose Level', 'bmi': 'BMI', 'stroke': 'Stroke'})
+
+        fig.update_layout(scene=dict(xaxis_title='Age', yaxis_title='Average Glucose Level', zaxis_title='BMI'),title='Age, Average Glucose Level, BMI vs. Stroke')
+        # Display the interactive 3D scatter plot
+        st.plotly_chart(fig)
+
+        st.markdown("Observations:")
+        st.markdown("1. Stroke patients (red points) generally tend to be older and have higher glucose levels, which is consistent with our earlier findings.")
+        st.markdown("2. BMI does not appear to differentiate stroke patients from non-stroke patients as there is significant overlap in the BMI values of both groups.")
+
 
 with tab3 :
     #visualization with HiPlot
@@ -282,3 +312,15 @@ with tab3 :
         st.components.v1.html(open(hiplot_html_file, 'r').read(), height=1500, scrolling=True)
     else:
         st.write("No data selected. Please choose at least one column to visualize.")
+
+with tab4 :
+    #Conclusion
+    st.markdown("Conclusions that can be drawn from observations are:")
+    st.markdown("1. The target variable stroke is highly imbalanced with far more instances of class 0 (no stroke) than class 1 (stroke). This is an important observation as it will affect the choice of machine learning model and evaluation metric.")
+    st.markdown("2. Categorical variables such as gender, hypertension, heart_disease, ever_married, work_type, Residence_type, and smoking_status showed various distributions. Notably, hypertension and heart disease were found more frequently in patients who had a stroke.")
+    st.markdown("3. Continuous variables (age, avg_glucose_level, bmi) exhibited different distributions. Age and average glucose level were found to be higher in stroke patients, but no significant difference in BMI was observed between stroke and non-stroke patients.")
+    st.markdown("4. The analysis also indicated that bmi might not be a strong predictor for stroke, as the distribution of BMI was similar for stroke and non-stroke patients.")
+    st.markdown("5. It was observed that older patients, particularly those who are self-employed or in private jobs, have a higher incidence of stroke. Also, stroke patients generally have higher glucose levels regardless of their work type and gender.")
+    st.markdown("6. The EDA provided valuable insights into the factors associated with strokes. Age, hypertension, heart disease, and average glucose level appear to be significant factors, while BMI might not be a significant predictor. This information can guide the feature selection and modeling process. However, the imbalance in the target variable could present a challenge in building a predictive model.")
+    st.markdown("References")
+    st.markdown("[Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)")
