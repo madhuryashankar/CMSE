@@ -518,7 +518,7 @@ with tab6 :
         
         #model (XGBoost)
         prediction_model = 'XGBoost'
-        trained_model = joblib.load('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/XGBoostTunedModel.pkl')
+        trained_model = joblib.load('XGBoostTunedModel.pkl')
         model_accuracy = "94.9%"
 
         if st.button("Submit"):
