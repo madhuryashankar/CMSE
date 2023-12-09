@@ -10,6 +10,7 @@ import joblib
 
 from sklearn import metrics
 from imblearn.over_sampling import SMOTE
+from sklearn.metrics import roc_curve, precision_recall_curve, auc, confusion_matrix, accuracy_score,make_scorer
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import permutation_importance
 from sklearn.preprocessing import LabelEncoder,StandardScaler
@@ -37,7 +38,7 @@ from plotly.subplots import make_subplots
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Loading dataset
-df = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/healthcare-dataset-stroke-data.csv')
+df = pd.read_csv('healthcare-dataset-stroke-data.csv')
 
 # Function to replace missing values with median
 def replace_missing_with_median(df):
@@ -81,6 +82,65 @@ def create_correlation_matrix(df, corr_range):
     selected_corr_data = selected_corr_data[(selected_corr_data >= corr_range[0]) & (selected_corr_data <= corr_range[1])]
     return selected_corr_data
 
+# Plots for the models
+def calculate_metrics_and_plots(model,train_X, train_y, test_X, test_y):
+    # Train the classifier
+    model.fit(train_X, train_y)
+
+    # Predict on the test set
+    y_pred_model = model.predict(test_X)
+
+    # Calculate metrics
+    ac = accuracy_score(test_y, y_pred_model)
+    rc = roc_auc_score(test_y, y_pred_model)
+    prec = precision_score(test_y, y_pred_model)
+    rec = recall_score(test_y, y_pred_model)
+    f1 = f1_score(test_y, y_pred_model)
+
+    # Confusion Matrix
+    cm = confusion_matrix(test_y, y_pred_model)
+
+    # ROC Curve
+    fpr, tpr, _ = roc_curve(test_y, model.predict_proba(test_X)[:, 1])
+    roc_auc = auc(fpr, tpr)
+
+    # Precision-Recall Curve
+    precision, recall, _ = precision_recall_curve(test_y, model.predict_proba(test_X)[:, 1])
+    pr_auc = auc(recall, precision)
+
+    # Create Plots
+    # Confusion Matrix Heatmap
+    fig_cm = go.Figure()
+    fig_cm.add_trace(go.Heatmap(z=cm[::-1], x=['Predicted 0', 'Predicted 1'], y=['Actual 1', 'Actual 0'],
+                                colorscale='Viridis', showscale=False))
+    fig_cm.update_layout(title='Confusion Matrix', xaxis=dict(title='Predicted Class'), yaxis=dict(title='Actual Class'))
+
+    # ROC Curve
+    fig_roc = go.Figure()
+    fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC curve (AUC={:.2f})'.format(roc_auc)))
+    fig_roc.update_layout(title='Receiver Operating Characteristic (ROC) Curve',
+                          xaxis=dict(title='False Positive Rate'),
+                          yaxis=dict(title='True Positive Rate'),
+                          showlegend=True)
+
+    # Precision-Recall Curve
+    fig_pr = go.Figure()
+    fig_pr.add_trace(go.Scatter(x=recall, y=precision, mode='lines', name='Precision-Recall curve (AUC={:.2f})'.format(pr_auc)))
+    fig_pr.update_layout(title='Precision-Recall Curve',
+                         xaxis=dict(title='Recall'),
+                         yaxis=dict(title='Precision'),
+                         showlegend=True)
+
+    # Metrics Bar Graph
+    metrics_labels = ['Accuracy', 'ROC AUC', 'Precision', 'Recall', 'F1-Score']
+    metrics_values = [ac, rc, prec, rec, f1]
+
+    fig_metrics = go.Figure()
+    fig_metrics.add_trace(go.Bar(x=metrics_labels, y=metrics_values, name='Metrics'))
+    fig_metrics.update_layout(barmode='group', xaxis=dict(title='Metrics'), yaxis=dict(title='Value'))
+
+    return fig_cm, fig_roc, fig_pr, fig_metrics
+
 # Apply styling
 st.set_page_config(
     page_title="Predicting Strokes: Insights from the Data",
@@ -109,6 +169,15 @@ with tab1 :
     st.write("Stroke Prediction plays a pivotal role in predicting the likelihood of an individual experiencing a stroke. Strokes, as the second leading cause of death globally, accounting for approximately 11% of total deaths according to the World Health Organization (WHO), represent a critical healthcare challenge.")
     st.write("The 'Stroke Prediction Dataset' was sourced from Kaggle which can be accessed at: [Kaggle Dataset Link](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset) and emerged as the most suitable choice due to its alignment with the primary focus of stroke prediction and prevention. This dataset encompasses a wide array of attributes, including demographic information, medical history, and lifestyle factors.")
     st.write("This dataset comprises 5110 records and 12 columns featuring both numerical and categorical data. It includes critical information such as unique identifiers, gender, age, medical conditions (hypertension and heart disease), marital status, occupation, residence type, glucose levels, BMI, smoking status, and stroke occurrences. Its primary objective is to unveil relationships between these factors and the likelihood of a stroke.")
+    
+    st.header("About the App")
+    st.write("1. By employing machine learning, the app offers users a comprehensive risk assessment for strokes, aiding in early prediction and preventive measures.")
+
+    st.write("2. Users can interactively explore the dataset through various visualizations, such as scatter plots and interactive 3D plots. The app ensures a user-friendly experience, allowing customization of attribute selection and visualization choices.")
+
+    st.write("3. Beyond risk assessment, the application serves as an educational platform, providing valuable information about strokes and associated risk factors. This educational component aims to increase awareness and encourage proactive health management.")
+
+    st.write("4. The web app offers transparency regarding model performance, presenting users with model evaluation metrics. It also provides personalized recommendations for stroke prevention based on an individual's risk factors, empowering users to make informed decisions about their health.")
 
     st.markdown("""<hr style="height:3px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
     st.write("If you'd like to view the unprocessed data, click the 'Show Raw Data' button. For those interested in numbers, explore detailed feature breakdowns and statistical analysis in the section below.")
@@ -387,11 +456,29 @@ with tab5 :
             # Predicting test data
             y_xgb = xgb_m.predict(X_test)
             cnf_matrix = metrics.confusion_matrix(y_test, y_xgb)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_xgb))
             st.write("Precision:",metrics.precision_score(y_test, y_xgb))
             st.write("Recall:",metrics.recall_score(y_test, y_xgb))
             st.write("F1:",metrics.f1_score(y_test, y_xgb))
+
+
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(XGBClassifier(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
+
+
         #XGBoost with HyperTuned Parameter
         elif model == "XGBoost (XGB) with HyperTuned Parameters":
             start = timer.time()
@@ -406,12 +493,27 @@ with tab5 :
             y_xgb = xgb_mt.predict(X_test)
             y_train_predict = xgb_mt.predict(X_train)
             cnf_matrix = metrics.confusion_matrix(y_train , y_train_predict)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write('Train Accuracy',accuracy_score(y_train , y_train_predict))
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_xgb))
             st.write("Precision:",metrics.precision_score(y_test, y_xgb))
             st.write("Recall:",metrics.recall_score(y_test, y_xgb))
             st.write("F1:",metrics.f1_score(y_test, y_xgb))
+
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(XGBClassifier(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         # Random Forest
         elif model == "Random Forest (RF)":
             start = timer.time()
@@ -422,11 +524,26 @@ with tab5 :
             # Predicting test data
             y_ranfor = ranfor_m.predict(X_test)
             cnf_matrix = metrics.confusion_matrix(y_test, y_ranfor)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_ranfor))
             st.write("Precision:",metrics.precision_score(y_test, y_ranfor))
             st.write("Recall:",metrics.recall_score(y_test, y_ranfor))
             st.write("F1:",metrics.f1_score(y_test, y_ranfor))
+
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(RandomForestClassifier(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         # Decision Tree
         elif model == "Decision Tree (DT)":
             start = timer.time()
@@ -437,11 +554,25 @@ with tab5 :
             # Predicting test data
             y_dtree = dtree_m.predict(X_test)
             cnf_matrix = metrics.confusion_matrix(y_test, y_dtree)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_dtree))
             st.write("Precision:",metrics.precision_score(y_test, y_dtree))
             st.write("Recall:",metrics.recall_score(y_test, y_dtree))
             st.write("F1:",metrics.f1_score(y_test, y_dtree))
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(DecisionTreeClassifier(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         # Logistic Regression
         elif model == "Logistic Regression (LR)":
             start = timer.time()
@@ -452,11 +583,25 @@ with tab5 :
             # Predicting test data
             y_pred = logit_m.predict(X_test_std)
             cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_pred))
             st.write("Precision:",metrics.precision_score(y_test, y_pred))
             st.write("Recall:",metrics.recall_score(y_test, y_pred))
             st.write("F1:",metrics.f1_score(y_test, y_pred))
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(LogisticRegression(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         # Gaussian Naive Bayes
         elif model == "Gaussian Naive Bayes (GNB)":
             start = timer.time()
@@ -467,11 +612,25 @@ with tab5 :
             # Predicting test data
             y_gnb = gnb_m.predict(X_test)
             cnf_matrix = metrics.confusion_matrix(y_test, y_gnb)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_gnb))
             st.write("Precision:",metrics.precision_score(y_test, y_gnb))
             st.write("Recall:",metrics.recall_score(y_test, y_gnb))
             st.write("F1:",metrics.f1_score(y_test, y_gnb))
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(GaussianNB(), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         # Singular Vector Machine
         elif model == "Singular Vector Machine (SVM)":
             start = timer.time()
@@ -482,11 +641,25 @@ with tab5 :
             # Predicting test data
             y_svm = svm_m.predict(X_test_std)
             cnf_matrix = metrics.confusion_matrix(y_test, y_svm)
-            st.write("Confusion matrix:\n",cnf_matrix)
             st.write("Accuracy:",metrics.accuracy_score(y_test, y_svm))
             st.write("Precision:",metrics.precision_score(y_test, y_svm))
             st.write("Recall:",metrics.recall_score(y_test, y_svm))
             st.write("F1 Score:",metrics.f1_score(y_test, y_svm))
+            # Calculate metrics and create plots
+            fig_cm, fig_roc, fig_pr, fig_metrics = calculate_metrics_and_plots(SVC(kernel='linear'), X_train, y_train, X_test, y_test)
+
+            # Display Plots
+            st.subheader("Confusion Matrix")
+            st.plotly_chart(fig_cm)
+
+            st.subheader("ROC Curve")
+            st.plotly_chart(fig_roc)
+
+            st.subheader("Precision-Recall Curve")
+            st.plotly_chart(fig_pr)
+
+            st.subheader("Metrics Bar Graph")
+            st.plotly_chart(fig_metrics)
         
         st.info("XGBoost (with Hyper Tuned Parameters) has been selected as the Best Model due to its High Accuracy compared to other models that has been Trained")
 
@@ -518,7 +691,7 @@ with tab6 :
         
         #model (XGBoost)
         prediction_model = 'XGBoost'
-        trained_model = joblib.load('XGBoostTunedModel.pkl')
+        trained_model = joblib.load('Models/XGBoostTunedModel.pkl')
         model_accuracy = "94.9%"
 
         if st.button("Submit"):
@@ -592,7 +765,3 @@ with tab7 :
         st.write("In the halls of MSU, I dive deep into the realms of Python, Data Analysis, and Machine Learning. Learning isn't just a task; it's my enthusiasm for embracing new technologies and methodologies in the dynamic field of data science.") 
         st.write("Beyond the screen, I find joy in diverse pursuits. Whether it's a fierce badminton match, the strokes of a paintbrush, the soothing chords of a guitar, or the tranquility of a hiking trail, I embrace the beauty of life beyond coding.")
         st.write("Come, explore my web app, and join me in this exciting adventure of data exploration and analytics. Let's make technology not just a skill but a thrilling journey!")
-
-
-
-
