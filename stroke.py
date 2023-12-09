@@ -40,6 +40,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 # Loading dataset
 df = pd.read_csv('https://raw.githubusercontent.com/madhuryashankar/CMSE/main/healthcare-dataset-stroke-data.csv')
 
+
 # Function to replace missing values with median
 def replace_missing_with_median(df):
     df['bmi'] = df['bmi'].fillna(df['bmi'].median())
@@ -152,7 +153,7 @@ st.set_page_config(
 st.write('<h2 style="text-align:center; vertical-align:middle; line-height:2; color:#046366;">Predicting Strokes: Insights from the Data</h2>', unsafe_allow_html=True)
 
 # Create tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["About the Data", "Visualizations", "Playground", "Insights", "Method Assessment", "Prediciton", "About Me"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7= st.tabs(["About the Data", "Visualizations", "Playground", "Method Assessment", "Prediciton", "Conclusion", "About Me"])
 
 with tab1 :
     image_path = "bg.png"  # Replace with the actual file path
@@ -409,7 +410,8 @@ with tab3 :
     else:
         st.write("No data selected. Please choose at least one column to visualize.")
 
-with tab4 :
+    st.markdown("""<hr style="height:3px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
+    
     #Conclusion
     st.markdown("Conclusions that can be drawn from observations are:")
     st.markdown("1. The target variable stroke is highly imbalanced with far more instances of class 0 (no stroke) than class 1 (stroke). This is an important observation as it will affect the choice of machine learning model and evaluation metric.")
@@ -418,9 +420,8 @@ with tab4 :
     st.markdown("4. The analysis also indicated that bmi might not be a strong predictor for stroke, as the distribution of BMI was similar for stroke and non-stroke patients.")
     st.markdown("5. It was observed that older patients, particularly those who are self-employed or in private jobs, have a higher incidence of stroke. Also, stroke patients generally have higher glucose levels regardless of their work type and gender.")
     st.markdown("6. The EDA provided valuable insights into the factors associated with strokes. Age, hypertension, heart disease, and average glucose level appear to be significant factors, while BMI might not be a significant predictor. This information can guide the feature selection and modeling process. However, the imbalance in the target variable could present a challenge in building a predictive model.")
-    st.markdown("[Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)")
 
-with tab5 :
+with tab4 :
         label_gender = LabelEncoder()
         label_married = LabelEncoder()
         label_work = LabelEncoder()
@@ -661,9 +662,10 @@ with tab5 :
             st.subheader("Metrics Bar Graph")
             st.plotly_chart(fig_metrics)
         
+        st.markdown("Conclusion:")
         st.info("XGBoost (with Hyper Tuned Parameters) has been selected as the Best Model due to its High Accuracy compared to other models that has been Trained")
 
-with tab6 :
+with tab5 :
 
         st.markdown("Enter the User's Details to predict the occurance of Stroke")
         st.text("Please Enter correct details to get better results")
@@ -753,11 +755,29 @@ with tab6 :
                 st.error("Probability of Occurance of Stroke is {:.2f}%".format(stroke_prob))
             st.text("Predicted with "+prediction_model+" Model with Accuracy of " +model_accuracy)
 
+with tab6:
+    #Conclusion
+    st.markdown("Conclusions:")
+
+    st.markdown("Our Stroke Prediction web application, utilizing the Kaggle Stroke Prediction Dataset, is a comprehensive tool for understanding and predicting stroke risk.")
+
+    st.markdown("1. The app addresses an imbalanced target variable, with a majority of instances indicating no stroke. This imbalance influences model choice and evaluation metrics.")
+    st.markdown("2. Categorical variables like gender, hypertension, heart_disease, and others show varied distributions, emphasizing the importance of certain conditions in stroke occurrence.")
+    st.markdown("3. Continuous variables such as age, avg_glucose_level, and BMI exhibit distinct patterns, with age and average glucose level identified as significant factors in stroke risk.")
+    st.markdown("4. BMI may not be a strong predictor for strokes, as its distribution remains similar for both stroke and non-stroke cases.")
+    st.markdown("5. Older age, certain occupations, and elevated glucose levels are associated with a higher incidence of strokes.")
+    st.markdown("6. The scatter plots reveal age and average glucose levels as influential factors in stroke risk.")
+    st.markdown("7. Certain features like gender and residence type show minimal impact on predicting strokes, while marriage status, work type, and smoking habits are notable determinants.")
+    st.markdown("8. The app provides valuable insights through EDA, guiding feature selection and modeling. However, the imbalanced target variable presents a challenge in model development.")
+    st.write("9. XGBoost (with Hyper Tuned Parameters) has been selected as the Best Model due to its High Accuracy compared to other trained models.")
+
+    st.markdown("[Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)")
+
 with tab7 :
 
     image_path = "bio.jpg" 
     image = open(image_path, "rb").read()
-    st.image(image, width=200)
+    st.image(image, width=300)
     text_column = st.columns(2)[0]
 
     with text_column:
